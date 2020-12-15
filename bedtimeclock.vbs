@@ -1,2 +1,2 @@
 Set objWShell = CreateObject("Wscript.Shell") 
-objWShell.run "cmd /c python " & Wscript.Arguments(0), vbHide
+objWShell.run "cmd /c " & Wscript.Arguments(0), vbHide

@@ -41,7 +41,7 @@ class App(ttk.Frame):
         tk.Label(self.batchtime_frame, text='分').grid(column=2, row=1)
 
         ### ３行目
-        self.timetosleep_frame = ttk.LabelFrame(self, width=300, height=50, labelanchor='nw', text='入眠準備時間')
+        self.timetosleep_frame = ttk.LabelFrame(self, width=300, height=50, labelanchor='nw', text='就寝準備時間')
         self.timetosleep_frame.grid(column=0, row=2, pady=5)
         tk.Label(self.timetosleep_frame, padx=8, text='パソコンを閉じてから\n寝るまでにかかる\n時間を設定します').grid(rowspan=2, column=0, row=0)
         self.create_lb(self.timetosleep_frame, 'lb_h', self.setting_dict['timetosleep'][0]).grid(column=1, row=0)
@@ -114,20 +114,14 @@ class App(ttk.Frame):
         return ret_dict
 
     def read_setting_file(self):
-        default_dict = {
-            'activate': [0],
-            'batchtime': [21, 0],
-            'timetosleep': [1, 0],
-            'wakeuptime': [7, 0],
-            'sleeptime': [8, 0],
-        }
-        # ex. 0,22:0,2:30,7:0,8:0
+        ret_dict = dict( zip(ud.SETTING_KEYS, ud.DEFAULT_VALUES) )
+        # ex. 0,21:0,1:0,7:0,8:0
         if os.path.isfile(ud.SETTING_FILE_PATH):
             with open(ud.SETTING_FILE_PATH, 'r', encoding='utf_8') as fileobj:
                 line = fileobj.readline().rstrip()
                 for key, val in zip(ud.SETTING_KEYS, line.split(',')):
-                    default_dict[key] = [int(v) for v in val.split(':')]
-        return default_dict
+                    ret_dict[key] = [int(v) for v in val.split(':')]
+        return ret_dict
 
     def write_setting_file(self):
         form_values_dict = self.read_form_values()
@@ -158,20 +152,27 @@ class App(ttk.Frame):
                 form_values_dict['batchtime'][0],
                 form_values_dict['batchtime'][1]
             )
-            subprocess.run(create_cmd, stdout=subprocess.PIPE)
+            # "On Windows, subprocess.Popen tries to duplicate non-zero standard handles and fails if they're invalid."
+            # らしい。よくわからなかったが。
+            subprocess.Popen(
+                create_cmd,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
         else:
             # タスクが登録されてない状態で削除しようとするとエラーを出力するが、動作に問題は無いので捨てる。
-            subprocess.run(f'schtasks /delete /tn {ud.BATCH_TASK_NAME} /f', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            subprocess.Popen(
+                f'schtasks /delete /tn {ud.BATCH_TASK_NAME} /f',
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL
+            )
 
-        if os.path.isfile(ud.SETTING_FILE_PATH):
-            # ユーザに書き込み権限を与える（'0o'は、pythonで8進数を表す接頭辞）。
-            os.chmod(ud.SETTING_FILE_PATH, 0o644)
         # 設定ファイルを更新する（無い場合は作成される）。
         with open(ud.SETTING_FILE_PATH, 'w', encoding='utf_8') as fileobj:
             colon_list = [':'.join( list(map(str, form_values_dict[key])) ) for key in ud.SETTING_KEYS]
             fileobj.write( ','.join(colon_list) )
-        # 読み取り専用にする（このアプリ以外から設定値を改ざんされないようにするため）。
-        os.chmod(ud.SETTING_FILE_PATH, 0o444)
         sys.exit()
 
 if __name__=="__main__":

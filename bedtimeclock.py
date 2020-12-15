@@ -6,6 +6,7 @@ import datetime
 import time
 import os
 import sys
+import re
 
 from bedtimeclockdata import UtilData as ud
 
@@ -14,7 +15,7 @@ class App(ttk.Frame):
     WIN_WIDTH = 380 
     WIN_HEIGHT = 200
 
-    def __init__(self, master, setting_dict, title='就寝予定時刻時計'):
+    def __init__(self, master, setting_dict, title='BedtimeClock'):
         super().__init__(master)
         master.title(title)
         # ディスプレイの右上に表示する。
@@ -93,15 +94,22 @@ class App(ttk.Frame):
         self.after(1000, self.update_UI)
 
 def read_setting_file():
-    SETTING_FILE_PATH = ud.SETTING_FILE_PATH
-    if os.path.isfile(SETTING_FILE_PATH):
-        with open(SETTING_FILE_PATH, 'r', encoding='utf_8') as fileobj:
+    if os.path.isfile(ud.SETTING_FILE_PATH):
+        with open(ud.SETTING_FILE_PATH, 'r', encoding='utf_8') as fileobj:
             line = fileobj.readline().rstrip()
+            csv_list = line.split(',')
+            # 設定の項目数が一致しているかどうかを検査する。
+            if len(csv_list)!=len(ud.SETTING_KEYS):
+                messagebox.showerror('エラー', '設定の項目数が一致しません')
+                raise ValueError('num of setting values are not correct.')
             setting_vals = list()
-            for vals in line.split(','):
-                setting_vals.append([int(v) for v in vals.split(':')])
-            setting_keys = ud.SETTING_KEYS
-        return dict( zip(setting_keys, setting_vals) )
+            for val, pat in zip(csv_list, ud.CHECK_CONSTRAINT):
+                # 設定値が制約を満たしているかどうかを検査する。
+                if re.fullmatch(pat, val) is None:
+                    messagebox.showerror('エラー', '設定値が不正です')
+                    raise ValueError('setting value is not correct.')
+                setting_vals.append([int(v) for v in val.split(':')])
+        return dict( zip(ud.SETTING_KEYS, setting_vals) )
     else:
         messagebox.showerror('エラー', '設定ファイルが見つかりません')
         raise FileNotFoundError('"bedtimeclocksetting.csv" file is not found.')
@@ -111,7 +119,10 @@ if __name__=="__main__":
     try:
         dic = read_setting_file()
     except FileNotFoundError as e:
-        print(e)
+        print(e, file=sys.stderr)
+        sys.exit()
+    except ValueError as e:
+        print(e, file=sys.stderr)
         sys.exit()
     root = tk.Tk()
     app = App(master=root, setting_dict=dic)
