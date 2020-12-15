@@ -152,8 +152,7 @@ class App(ttk.Frame):
                 form_values_dict['batchtime'][0],
                 form_values_dict['batchtime'][1]
             )
-            # "On Windows, subprocess.Popen tries to duplicate non-zero standard handles and fails if they're invalid."
-            # らしい。よくわからなかったが。
+            # ハンドルが無効になっているとエラーを吐くので、入力元・出力先を指定しておく必要がある。
             subprocess.Popen(
                 create_cmd,
                 stdin=subprocess.DEVNULL,
