@@ -86,8 +86,8 @@ class App(ttk.Frame):
             height=5,
             width=8
         )
-        itemlist = list(range(0,24)) if lb_name=='lb_h' else list(range(0,60))
-        ret_lb.insert(tk.END, *itemlist)
+        itemrange = range(0,24) if lb_name=='lb_h' else range(0,60)
+        ret_lb.insert(tk.END, *itemrange)
         # デフォルト値の設定
         ret_lb.see(default_value)
         ret_lb.select_set(default_value)
@@ -144,10 +144,9 @@ class App(ttk.Frame):
 
         # タスクスケジューラに時計起動タスクを登録する。
         if form_values_dict['activate'][0]==1:
-            create_cmd = 'schtasks /create /tn {0} /tr "{1} {2}" /sc daily /st {3:0>2d}:{4:0>2d} /F'
+            create_cmd = 'schtasks /create /tn {0} /tr "{1}" /sc daily /st {2:0>2d}:{3:0>2d} /f'
             create_cmd = create_cmd.format(
                 ud.BATCH_TASK_NAME,
-                ud.BATCH_FILE_PATH,
                 ud.APP_FILE_PATH,
                 form_values_dict['batchtime'][0],
                 form_values_dict['batchtime'][1]

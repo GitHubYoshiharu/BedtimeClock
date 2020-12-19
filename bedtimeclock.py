@@ -7,6 +7,7 @@ import time
 import os
 import sys
 import re
+import math
 
 from bedtimeclockdata import UtilData as ud
 
@@ -41,8 +42,8 @@ class App(ttk.Frame):
         bedtime = datetime.datetime.now() + datetime.timedelta(hours=self.setting_dict['timetosleep'][0], minutes=self.setting_dict['timetosleep'][1])
         bedtime_str = '{0:0>2d}:{1:0>2d}'.format(bedtime.hour, bedtime.minute)
         sleeptime = self.wakeuptime - bedtime
-        # 小数点以下を切り捨てる。
-        sleeptime_seconds = int( sleeptime.total_seconds() )
+        # 小数点以下を切り上げる。
+        sleeptime_seconds = math.ceil( sleeptime.total_seconds() )
         sleeptime_h = sleeptime_seconds // 3600
         sleeptime_m = (sleeptime_seconds % 3600) // 60
         sleeptime_str = '{0}時間 {1}分'.format(sleeptime_h, sleeptime_m)
@@ -64,10 +65,10 @@ class App(ttk.Frame):
         bedtime = datetime.datetime.now() + datetime.timedelta(hours=self.setting_dict['timetosleep'][0], minutes=self.setting_dict['timetosleep'][1])
         bedtime_str = '{0:0>2d}:{1:0>2d}'.format(bedtime.hour, bedtime.minute)
         sleeptime = self.wakeuptime - bedtime
-        # 小数点以下を切り捨てる。
-        sleeptime_seconds = int( sleeptime.total_seconds() )
+        # 小数点以下を切り上げる。
+        sleeptime_seconds = math.ceil( sleeptime.total_seconds() )
         # 睡眠時間は負になり得ない。
-        if sleeptime_seconds < 0:
+        if sleeptime_seconds <= 0:
             sys.exit()
         sleeptime_h = sleeptime_seconds // 3600
         sleeptime_m = (sleeptime_seconds % 3600) // 60
